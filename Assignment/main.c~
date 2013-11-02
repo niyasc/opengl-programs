@@ -15,6 +15,7 @@ struct Cord
 };
 struct Cord *points=NULL;
 
+
 void init(void)
 {
 	glClearColor(1.0,1.0,1.0,1.0);
@@ -25,23 +26,7 @@ void init(void)
 	
 }
 
-void initialize()
-{
-	glColor3f(0,0,0);
-	glBegin(GL_POLYGON);
-		glVertex2i(0,0);
-		glVertex2i(800,0);
-		glVertex2i(800,90);
-		glVertex2i(0,90);
-	glEnd();
-	glColor3f(0,0,1);
-	glBegin(GL_POLYGON);
-		glVertex2i(0,90);
-		glVertex2i(800,90);
-		glVertex2i(800,100);
-		glVertex2i(0,100);
-	glEnd();
-}
+
 void circle(int x,int y,int r)
 {
 	float i;
@@ -99,8 +84,6 @@ void draw()
 {
 	switch(status)
 	{
-		case 0: initialize();
-			break;
 		case 1: simulate_movement();
 			break;
 	}
@@ -173,7 +156,7 @@ void mouse(GLint button,GLint state,GLint x,GLint y)
 
 void mouse_move(int x,int y)
 {
-	if(y<490)
+	if(y<500)
 		use_point(x,600-y);
 }
 
