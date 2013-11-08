@@ -1,19 +1,15 @@
 #include<GL/glut.h>
 #include<math.h>
 #include<stdlib.h>
-#include<stdio.h>
-#include<stdbool.h>
 
-bool mouse_clicked;
 int px,py;
-int status=0;
-struct Cord
+int scene=0;
+struct Cordinates
 {
 	int x,y;
-	int flag;//flag=0 for points not drawn,flag=1 for points drawn
-	struct Cord *next;
+	struct Cordinates *next;
 };
-struct Cord *points=NULL;
+struct Cordinates *points=NULL,*rpoints=NULL;
 
 
 void init(void)
@@ -38,14 +34,87 @@ void circle(int x,int y,int r)
 	}
 	glEnd();
 }
-		
+	
+void use_reverse_point(int x,int y)
+{
+	struct Cordinates *temp;
+	if(rpoints==NULL)
+	{
+		struct Cordinates *new=(struct Cordinates *)malloc(sizeof(struct Cordinates));
+		new->x=x;
+		new->y=y;
+		new->next=NULL;
+		rpoints=new;
+		temp=rpoints;
+	}
+	else
+	{
+		struct Cordinates *temp;
+		struct Cordinates *new=(struct Cordinates *)malloc(sizeof(struct Cordinates));
+		new->x=x;
+		new->y=y;
+		new->next=rpoints;
+		rpoints=new;
+	}
+	glColor3f(1,0,0);
+	temp=rpoints;
+	if(temp->next!=NULL)
+	{
+	
+		glBegin(GL_LINES);
+			glVertex2i(rpoints->x,rpoints->y);
+			glVertex2i(rpoints->next->x,rpoints->next->y);
+		glEnd();
+	}
+	
+	glFlush();
+}	
 
 void simulate_movement()
 {
 	//printf("in simulate movement");
-	struct Cord *temp;
+	struct Cordinates *temp;
 	
 	temp=points;
+	
+	if(temp->next!=NULL)
+	{
+		glColor3f(1,1,1);
+		/*glBegin(GL_LINES);
+		glVertex2i(temp->x,temp->y);
+		glVertex2i(temp->next->x,temp->next->y);
+		glEnd();*/
+		circle(px,py,10);
+		glColor3f(0,0,0);
+		circle(temp->next->x,temp->next->y,10);
+		
+		px=temp->next->x;
+		py=temp->next->y;
+		
+		struct Cordinates *t=temp;
+		points=temp->next;
+		use_reverse_point(t->x,t->y);
+		free(t);
+		usleep(50000);
+	}
+	else
+	{
+		glColor3f(1,1,1);
+		circle(px,py,10);
+		free(temp);
+		points=NULL;
+		scene=2;
+	}
+	
+	glFlush();
+}
+
+void simulate_reverse_movement()
+{
+	//printf("in simulate movement");
+	struct Cordinates *temp;
+	
+	temp=rpoints;
 	
 	if(temp->next!=NULL)
 	{
@@ -54,7 +123,6 @@ void simulate_movement()
 		glVertex2i(temp->x,temp->y);
 		glVertex2i(temp->next->x,temp->next->y);
 		glEnd();
-		glColor3f(1,1,1);
 		circle(px,py,10);
 		glColor3f(0,0,0);
 		circle(temp->next->x,temp->next->y,10);
@@ -62,18 +130,19 @@ void simulate_movement()
 		px=temp->next->x;
 		py=temp->next->y;
 		
-		struct Cord *t=temp;
-		points=temp->next;
+		struct Cordinates *t=temp;
+		rpoints=temp->next;
+		//use_reverse_point(t->x,t->y);
 		free(t);
-		usleep(30000);
+		usleep(50000);
 	}
 	else
 	{
 		glColor3f(1,1,1);
 		circle(px,py,10);
 		free(temp);
-		points=NULL;
-		status=0;
+		rpoints=NULL;
+		scene=0;
 	}
 	
 	glFlush();
@@ -82,10 +151,11 @@ void simulate_movement()
 
 void draw()
 {
-	switch(status)
+	switch(scene)
 	{
 		case 1: simulate_movement();
 			break;
+		case 2: simulate_reverse_movement();
 	}
 		
 	glFlush();
@@ -93,27 +163,25 @@ void draw()
 
 void use_point(int x,int y)
 {
-	struct Cord *temp;
+	struct Cordinates *temp;
 	if(points==NULL)
 	{
-		struct Cord *new=(struct Cord *)malloc(sizeof(struct Cord*));
+		struct Cordinates *new=(struct Cordinates *)malloc(sizeof(struct Cordinates));
 		new->x=x;
 		new->y=y;
-		new->flag=0;
 		new->next=NULL;
 		points=new;
 		temp=points;
 	}
 	else
 	{
-		struct Cord *temp;
+		struct Cordinates *temp;
 		temp=points;
 		while(temp->next!=NULL)
 			temp=temp->next;
-		struct Cord *new=(struct Cord *)malloc(sizeof(struct Cord*));
+		struct Cordinates *new=(struct Cordinates *)malloc(sizeof(struct Cordinates));
 		new->x=x;
 		new->y=y;
-		new->flag=0;
 		new->next=NULL;
 		temp->next=new;
 	}
@@ -136,18 +204,12 @@ void use_point(int x,int y)
 void mouse(GLint button,GLint state,GLint x,GLint y)
 {
 	//printf("mouse event");
-	if(status==0)
+	if(scene==0)
 	{
-		if(button==GLUT_LEFT_BUTTON&&state==GLUT_DOWN)
-		{
-			//printf("mouse down");
-			mouse_clicked=true;
-		}
-		else if(button==GLUT_LEFT_BUTTON&&state==GLUT_UP)
+		if(button==GLUT_LEFT_BUTTON&&state==GLUT_UP)
 		{
 			//printf("mouse up");
-			mouse_clicked=false;
-			status=1;
+			scene=1;
 		}
 	}
 	//printf("out of function mouse_clicked=%d\n",mouse_clicked);
